@@ -1,0 +1,90 @@
+==========================================================================
+ SO DO GITFLOW - BAI 4 (Hotfix & Gitflow thuc te)
+ Chi dung ky tu ASCII. Thoi gian di tu TRAI sang PHAI.
+ Ky hieu: o = commit, + = diem re nhanh / diem gop, [..] = tag.
+==========================================================================
+
+
+--------------------------------------------------------------------------
+ PHAN 1. Gitflow tong quat: feature va release
+--------------------------------------------------------------------------
+
+ main       o [v1.0.0] ---------------------------------- o [v1.1.0] --------->
+            |                                              ^
+            |                        release/1.1.0         | (merge --no-ff + tag)
+            |                      +---o---o---o-----------+
+            |                     /                         \
+ develop    o---o---o-------o----+---o-------o---------------+---o---o--------->
+                 \         /      \         /
+ feature/*        +---o---+        +---o---+
+                  (feature A)      (feature B)
+
+ - feature/*: tach tu develop, gop lai vao develop.
+ - release/*: tach tu develop, gop vao main (co tag) VA gop nguoc vao develop.
+
+
+--------------------------------------------------------------------------
+ PHAN 2. Gitflow tong quat: hotfix
+--------------------------------------------------------------------------
+
+ main       o [v1.1.0] --------------------------+ [v1.1.1] ----------------->
+             \                                  /
+ hotfix/*     +----o---------o-----------------+
+                                                \
+ develop    ---o-------------o---------o---------+--------------------------->
+
+ - hotfix/*: tach TRUC TIEP tu main (ban dang chay production).
+ - Gop vao main + gan tag tang PATCH, sau do gop ca vao develop
+   (hoac vao release/* neu dang ton tai mot nhanh release).
+
+
+--------------------------------------------------------------------------
+ PHAN 3. So do merge CUA BAI (dung hash that trong terminal_log.txt)
+--------------------------------------------------------------------------
+
+   bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+   78569ed feat: them dich vu nguoi dung get_user_profile      [v1.0.0]
+   1297c15 feat: them report_service ... (dang phat trien)
+   20a228e feat: bo sung roadmap 1.1.0 vao README
+   01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+   2101781 chore: nang phien ban len 1.0.1
+   337d9b5 Merge branch 'hotfix/v1.0.1'                         [v1.0.1]
+   508c835 Merge branch 'hotfix/v1.0.1' into develop
+
+
+ main            bb7ec50 --- 78569ed ---------------------------------- 337d9b5
+                  (init)    [v1.0.0]\                                  /  [v1.0.1]
+                           |         \                                /
+ hotfix/v1.0.1             |          +--- 01b4647 --- 2101781 ----+
+ (xoa sau khi xong)        |                fix:         chore:     \
+                           |                                         \
+ develop                   +--- 1297c15 --- 20a228e -----------------+--- 508c835
+                               feat:        feat:                      merge hotfix
+                               report       roadmap                    vao develop
+
+
+ Cach doc:
+   1. 78569ed la diem chung: main (tag v1.0.0) va develop cung tach ra tu day.
+   2. hotfix/v1.0.1 tach TRUC TIEP tu 78569ed tren main, khong mang theo
+      1297c15 va 20a228e (tinh nang dang lam do cua develop).
+   3. 337d9b5 la merge commit (2 cha: 78569ed va 2101781) tren main, gan tag v1.0.1.
+   4. 508c835 la merge commit (2 cha: 20a228e va 2101781) tren develop,
+      dua ban va 01b4647 + 2101781 vao develop ma khong dong vao tinh nang dang lam.
+
+
+--------------------------------------------------------------------------
+ PHAN 4. Do thi that: git log --graph --oneline --all --decorate
+--------------------------------------------------------------------------
+
+ *   508c835 (HEAD -> develop) Merge branch 'hotfix/v1.0.1' into develop
+ |\
+ * | 20a228e feat: bo sung roadmap 1.1.0 vao README
+ * | 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+ | | * 337d9b5 (tag: v1.0.1, main) Merge branch 'hotfix/v1.0.1'
+ | |/|
+ |/|/
+ | * 2101781 chore: nang phien ban len 1.0.1
+ | * 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+ |/
+ * 78569ed (tag: v1.0.0) feat: them dich vu nguoi dung get_user_profile
+ * bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0

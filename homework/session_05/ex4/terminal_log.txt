@@ -1,0 +1,643 @@
+==========================================================================
+ TERMINAL LOG - BAI 4: Mo phong quy trinh Hotfix & Gitflow thuc te
+ Moi lenh duoi day da duoc chay that tren may (Git Bash, Windows 11).
+ Dong bat dau bang "$ " la lenh; cac dong ngay sau do la output nguyen van.
+==========================================================================
+
+# BUOC 0: Kiem tra moi truong va tao thu muc demo
+
+$ git --version
+git version 2.49.0.windows.1
+
+$ python --version
+Python 3.13.3
+
+$ mkdir -p /d/Rikkei/DevOps/Session5/_demo/bai4/gitflow-hotfix-demo
+
+$ git init -b main
+Initialized empty Git repository in D:/Rikkei/DevOps/Session5/_demo/bai4/gitflow-hotfix-demo/.git/
+
+$ git config user.name 'Lê Toàn'
+
+$ git config user.email 'trinhhanh261293@gmail.com'
+
+$ git config core.autocrlf false
+
+$ git config --local --list
+core.repositoryformatversion=0
+core.filemode=false
+core.bare=false
+core.logallrefupdates=true
+core.symlinks=false
+core.ignorecase=true
+core.autocrlf=false
+user.name=Lê Toàn
+user.email=trinhhanh261293@gmail.com
+
+
+# BUOC 1A: Dung hien trang tren main (phien ban stable 1.0.0)
+
+$ mkdir -p app
+
+$ cat > README.md <<'EOF'
+# User Service Demo
+
+Dich vu quan ly ho so nguoi dung (ung dung demo cho bai tap Gitflow).
+
+## Phien ban
+
+Phien ban on dinh hien tai: 1.0.0 (chay tren production).
+EOF
+
+$ printf '1.0.0\n' > VERSION
+
+$ cat VERSION
+1.0.0
+
+$ git add README.md VERSION
+
+$ git commit -m 'chore: khoi tao du an voi README va VERSION 1.0.0'
+[main (root-commit) bb7ec50] chore: khoi tao du an voi README va VERSION 1.0.0
+ 2 files changed, 8 insertions(+)
+ create mode 100644 README.md
+ create mode 100644 VERSION
+
+$ cat > app/user_service.py <<'EOF'
+"""Dich vu nguoi dung - phien ban 1.0.0."""
+
+USERS = {
+    1: {
+        "id": 1,
+        "username": "lan.nguyen",
+        "email": "lan.nguyen@example.com",
+        "password_hash": "pbkdf2:sha256:600000:s4lt1:9f2c7a1be44d03c5a8e1f6b2d7c9a0e3",
+        "role": "admin",
+    },
+    2: {
+        "id": 2,
+        "username": "minh.tran",
+        "email": "minh.tran@example.com",
+        "password_hash": "pbkdf2:sha256:600000:s4lt2:1b8e5d3f0a62c9e7d4b1a8f3c5e20d96",
+        "role": "member",
+    },
+}
+
+
+def get_user_profile(user_id):
+    """Tra ve ho so nguoi dung theo id."""
+    user = USERS.get(user_id)
+    if user is None:
+        return None
+    # LOI: tra ve nguyen ban ghi, ke ca password_hash va email day du
+    return dict(user)
+EOF
+
+$ git add app/user_service.py
+
+$ git commit -m 'feat: them dich vu nguoi dung get_user_profile'
+[main 78569ed] feat: them dich vu nguoi dung get_user_profile
+ 1 file changed, 27 insertions(+)
+ create mode 100644 app/user_service.py
+
+$ git tag -a v1.0.0 -m 'Release 1.0.0'
+
+$ git tag
+v1.0.0
+
+
+# BUOC 1B: Tao nhanh develop tu main va them 2 commit tinh nang dang phat trien do dang
+
+$ git switch -c develop
+Switched to a new branch 'develop'
+
+$ cat > app/report_service.py <<'EOF'
+"""Dich vu bao cao - TINH NANG DANG PHAT TRIEN (cho phien ban 1.1.0)."""
+
+from app.user_service import USERS
+
+
+def count_users_by_role():
+    """Dem so nguoi dung theo vai tro."""
+    result = {}
+    for user in USERS.values():
+        result[user["role"]] = result.get(user["role"], 0) + 1
+    return result
+
+
+def export_report():
+    # TODO: xuat bao cao ra file CSV (chua lam xong)
+    raise NotImplementedError("Tinh nang xuat bao cao chua hoan thanh")
+EOF
+
+$ git add app/report_service.py
+
+$ git commit -m 'feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)'
+[develop 1297c15] feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+ 1 file changed, 16 insertions(+)
+ create mode 100644 app/report_service.py
+
+$ cat > README.md <<'EOF'
+# User Service Demo
+
+Dich vu quan ly ho so nguoi dung (ung dung demo cho bai tap Gitflow).
+
+## Phien ban
+
+Phien ban on dinh hien tai: 1.0.0 (chay tren production).
+
+## Roadmap 1.1.0 (dang phat trien tren develop)
+
+- Bao cao thong ke nguoi dung theo vai tro (report_service)
+- Xuat bao cao ra file CSV (chua xong)
+- Phan trang danh sach nguoi dung
+EOF
+
+$ git add README.md
+
+$ git commit -m 'feat: bo sung roadmap 1.1.0 vao README'
+[develop 20a228e] feat: bo sung roadmap 1.1.0 vao README
+ 1 file changed, 6 insertions(+)
+
+$ git log --graph --oneline --all
+* 20a228e feat: bo sung roadmap 1.1.0 vao README
+* 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+* 78569ed feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+$ git branch -a
+* develop
+  main
+
+$ git tag
+v1.0.0
+
+
+# BUOC 2: Phat hien loi tren production (main) - ham get_user_profile lo password_hash
+
+$ git switch main
+Switched to branch 'main'
+
+$ git branch --show-current
+main
+
+$ ls app
+user_service.py
+
+$ python -c "import json; from app.user_service import get_user_profile; print(json.dumps(get_user_profile(1), indent=2))"
+{
+  "id": 1,
+  "username": "lan.nguyen",
+  "email": "lan.nguyen@example.com",
+  "password_hash": "pbkdf2:sha256:600000:s4lt1:9f2c7a1be44d03c5a8e1f6b2d7c9a0e3",
+  "role": "admin"
+}
+
+
+# BUOC 3: Tao nhanh hotfix/v1.0.1 TRUC TIEP tu main va sua loi
+
+$ git switch -c hotfix/v1.0.1
+Switched to a new branch 'hotfix/v1.0.1'
+
+$ git branch --show-current
+hotfix/v1.0.1
+
+$ cat > app/user_service.py <<'EOF'
+"""Dich vu nguoi dung - phien ban 1.0.1 (hotfix: khong lo du lieu nhay cam)."""
+
+USERS = {
+    1: {
+        "id": 1,
+        "username": "lan.nguyen",
+        "email": "lan.nguyen@example.com",
+        "password_hash": "pbkdf2:sha256:600000:s4lt1:9f2c7a1be44d03c5a8e1f6b2d7c9a0e3",
+        "role": "admin",
+    },
+    2: {
+        "id": 2,
+        "username": "minh.tran",
+        "email": "minh.tran@example.com",
+        "password_hash": "pbkdf2:sha256:600000:s4lt2:1b8e5d3f0a62c9e7d4b1a8f3c5e20d96",
+        "role": "member",
+    },
+}
+
+
+def mask_email(email):
+    """Che bot email: giu 2 ky tu dau cua phan local, an phan con lai."""
+    local, _, domain = email.partition("@")
+    return local[:2] + "***@" + domain
+
+
+def get_user_profile(user_id):
+    """Tra ve ho so cong khai cua nguoi dung (whitelist cac truong an toan)."""
+    user = USERS.get(user_id)
+    if user is None:
+        return None
+    # Chi tra ve cac truong duoc phep. TUYET DOI khong tra ve password_hash.
+    return {
+        "id": user["id"],
+        "username": user["username"],
+        "email": mask_email(user["email"]),
+        "role": user["role"],
+    }
+EOF
+
+$ git diff -- app/user_service.py
+diff --git a/app/user_service.py b/app/user_service.py
+index 2971802..4627671 100644
+--- a/app/user_service.py
++++ b/app/user_service.py
+@@ -1,4 +1,4 @@
+-"""Dich vu nguoi dung - phien ban 1.0.0."""
++"""Dich vu nguoi dung - phien ban 1.0.1 (hotfix: khong lo du lieu nhay cam)."""
+ 
+ USERS = {
+     1: {
+@@ -18,10 +18,21 @@ USERS = {
+ }
+ 
+ 
++def mask_email(email):
++    """Che bot email: giu 2 ky tu dau cua phan local, an phan con lai."""
++    local, _, domain = email.partition("@")
++    return local[:2] + "***@" + domain
++
++
+ def get_user_profile(user_id):
+-    """Tra ve ho so nguoi dung theo id."""
++    """Tra ve ho so cong khai cua nguoi dung (whitelist cac truong an toan)."""
+     user = USERS.get(user_id)
+     if user is None:
+         return None
+-    # LOI: tra ve nguyen ban ghi, ke ca password_hash va email day du
+-    return dict(user)
++    # Chi tra ve cac truong duoc phep. TUYET DOI khong tra ve password_hash.
++    return {
++        "id": user["id"],
++        "username": user["username"],
++        "email": mask_email(user["email"]),
++        "role": user["role"],
++    }
+
+$ git add app/user_service.py
+
+$ git commit -m 'fix: khong tra ve password_hash trong ho so nguoi dung'
+[hotfix/v1.0.1 01b4647] fix: khong tra ve password_hash trong ho so nguoi dung
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+$ printf '1.0.1\n' > VERSION
+
+$ cat > CHANGELOG.md <<'EOF'
+# Changelog
+
+Dinh dang theo Keep a Changelog, phien ban theo Semantic Versioning.
+
+## [1.0.1] - Hotfix
+
+### Fixed
+- Ham get_user_profile khong con tra ve truong password_hash (loi lo du lieu nghiem trong).
+- Email trong ho so duoc che bot (vi du: la***@example.com).
+
+## [1.0.0]
+
+### Added
+- Phat hanh on dinh dau tien: dich vu nguoi dung get_user_profile.
+EOF
+
+$ git add VERSION CHANGELOG.md
+
+$ git commit -m 'chore: nang phien ban len 1.0.1'
+[hotfix/v1.0.1 2101781] chore: nang phien ban len 1.0.1
+ 2 files changed, 15 insertions(+), 1 deletion(-)
+ create mode 100644 CHANGELOG.md
+
+$ git status --short
+
+$ git log --graph --oneline --all
+* 2101781 chore: nang phien ban len 1.0.1
+* 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+| * 20a228e feat: bo sung roadmap 1.1.0 vao README
+| * 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+|/  
+* 78569ed feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+
+# Kiem thu lai sau khi sua tren nhanh hotfix/v1.0.1
+
+$ python -c "import json; from app.user_service import get_user_profile; print(json.dumps(get_user_profile(1), indent=2))"
+{
+  "id": 1,
+  "username": "lan.nguyen",
+  "email": "la***@example.com",
+  "role": "admin"
+}
+
+$ python -c "from app.user_service import get_user_profile; print(sorted(get_user_profile(2)))"
+['email', 'id', 'role', 'username']
+
+$ python -c "from app.user_service import get_user_profile; print(get_user_profile(999))"
+None
+
+$ cat VERSION
+1.0.1
+
+
+# BUOC 4: Tich hop vao main, gan tag v1.0.1
+
+$ git switch main
+Switched to branch 'main'
+
+$ git merge-base --is-ancestor main hotfix/v1.0.1 && echo 'main la tien than truc tiep cua hotfix/v1.0.1 -> git merge thuong (khong --no-ff) se fast-forward'
+main la tien than truc tiep cua hotfix/v1.0.1 -> git merge thuong (khong --no-ff) se fast-forward
+
+
+# Thi nghiem phu (trong ban sao rieng ff-test, KHONG anh huong repo chinh): merge thuong se fast-forward
+
+$ git -c core.autocrlf=false clone -q /d/Rikkei/DevOps/Session5/_demo/bai4/gitflow-hotfix-demo /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test
+
+$ git -C /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test branch --show-current
+main
+
+$ git -C /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test -c user.name=test -c user.email=test@example.com merge origin/hotfix/v1.0.1
+Updating 78569ed..2101781
+Fast-forward
+ CHANGELOG.md        | 14 ++++++++++++++
+ VERSION             |  2 +-
+ app/user_service.py | 19 +++++++++++++++----
+ 3 files changed, 30 insertions(+), 5 deletions(-)
+ create mode 100644 CHANGELOG.md
+
+$ git -C /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test log --graph --oneline --all
+* 2101781 chore: nang phien ban len 1.0.1
+* 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+| * 20a228e feat: bo sung roadmap 1.1.0 vao README
+| * 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+|/  
+* 78569ed feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+
+# Thi nghiem phu: so sanh tag nhe (lightweight) voi tag chu thich (annotated), cung trong ff-test
+
+$ git -C /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test tag v-nhe-demo
+
+$ git -C /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test cat-file -t v-nhe-demo
+commit
+
+$ git -C /d/Rikkei/DevOps/Session5/_demo/bai4/ff-test tag -n
+v-nhe-demo      chore: nang phien ban len 1.0.1
+v1.0.0          Release 1.0.0
+
+
+# Quay lai repo chinh: merge voi --no-ff de giu dau vet nhanh hotfix
+
+$ git merge --no-ff hotfix/v1.0.1 -m "Merge branch 'hotfix/v1.0.1'"
+Merge made by the 'ort' strategy.
+ CHANGELOG.md        | 14 ++++++++++++++
+ VERSION             |  2 +-
+ app/user_service.py | 19 +++++++++++++++----
+ 3 files changed, 30 insertions(+), 5 deletions(-)
+ create mode 100644 CHANGELOG.md
+
+$ git tag -a v1.0.1 -m 'Release Hotfix 1.0.1'
+
+$ git tag
+v1.0.0
+v1.0.1
+
+$ git tag -n
+v1.0.0          Release 1.0.0
+v1.0.1          Release Hotfix 1.0.1
+
+$ git show v1.0.1 --stat --first-parent | head -25
+tag v1.0.1
+Tagger: Lê Toàn <trinhhanh261293@gmail.com>
+Date:   Fri Oct 2 12:49:15 2026 +0700
+
+Release Hotfix 1.0.1
+
+commit 337d9b539d90e20a575a3ec83983e3d7693cd431
+Merge: 78569ed 2101781
+Author: Lê Toàn <trinhhanh261293@gmail.com>
+Date:   Fri Oct 2 12:49:15 2026 +0700
+
+    Merge branch 'hotfix/v1.0.1'
+
+ CHANGELOG.md        | 14 ++++++++++++++
+ VERSION             |  2 +-
+ app/user_service.py | 19 +++++++++++++++----
+ 3 files changed, 30 insertions(+), 5 deletions(-)
+
+$ git rev-parse 'v1.0.1^{commit}'
+337d9b539d90e20a575a3ec83983e3d7693cd431
+
+$ git rev-parse main
+337d9b539d90e20a575a3ec83983e3d7693cd431
+
+$ test "$(git rev-parse 'v1.0.1^{commit}')" = "$(git rev-parse main)" && echo 'v1.0.1 chi dung vao commit moi nhat cua main'
+v1.0.1 chi dung vao commit moi nhat cua main
+
+$ git cat-file -t v1.0.1
+tag
+
+$ git cat-file -t v1.0.0
+tag
+
+$ git describe --tags
+v1.0.1
+
+$ git log --graph --oneline --all --decorate
+*   337d9b5 (HEAD -> main, tag: v1.0.1) Merge branch 'hotfix/v1.0.1'
+|\  
+| * 2101781 (hotfix/v1.0.1) chore: nang phien ban len 1.0.1
+| * 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+|/  
+| * 20a228e (develop) feat: bo sung roadmap 1.1.0 vao README
+| * 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+|/  
+* 78569ed (tag: v1.0.0) feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+$ python -c "import json; from app.user_service import get_user_profile; print(json.dumps(get_user_profile(1), indent=2))"
+{
+  "id": 1,
+  "username": "lan.nguyen",
+  "email": "la***@example.com",
+  "role": "admin"
+}
+
+
+# BUOC 5: Gop nguoc hotfix ve develop
+
+$ git switch develop
+Switched to branch 'develop'
+
+
+# Truoc khi gop: develop chua co commit fix (grep khong tim thay, ma thoat 1)
+
+$ git log --oneline develop | grep 'fix:'
+(ma thoat: 1)
+
+
+# Gop hotfix vao develop
+
+$ git merge --no-ff hotfix/v1.0.1 -m "Merge branch 'hotfix/v1.0.1' into develop"
+Merge made by the 'ort' strategy.
+ CHANGELOG.md        | 14 ++++++++++++++
+ VERSION             |  2 +-
+ app/user_service.py | 19 +++++++++++++++----
+ 3 files changed, 30 insertions(+), 5 deletions(-)
+ create mode 100644 CHANGELOG.md
+
+$ git status
+On branch develop
+nothing to commit, working tree clean
+
+$ git log --graph --oneline --all
+*   508c835 Merge branch 'hotfix/v1.0.1' into develop
+|\  
+* | 20a228e feat: bo sung roadmap 1.1.0 vao README
+* | 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+| | * 337d9b5 Merge branch 'hotfix/v1.0.1'
+| |/| 
+|/|/  
+| * 2101781 chore: nang phien ban len 1.0.1
+| * 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+|/  
+* 78569ed feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+$ git log --oneline develop | grep 'fix:'
+01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+
+$ git branch --contains 01b4647
+* develop
+  hotfix/v1.0.1
+  main
+
+$ git show develop:app/user_service.py | head -30
+"""Dich vu nguoi dung - phien ban 1.0.1 (hotfix: khong lo du lieu nhay cam)."""
+
+USERS = {
+    1: {
+        "id": 1,
+        "username": "lan.nguyen",
+        "email": "lan.nguyen@example.com",
+        "password_hash": "pbkdf2:sha256:600000:s4lt1:9f2c7a1be44d03c5a8e1f6b2d7c9a0e3",
+        "role": "admin",
+    },
+    2: {
+        "id": 2,
+        "username": "minh.tran",
+        "email": "minh.tran@example.com",
+        "password_hash": "pbkdf2:sha256:600000:s4lt2:1b8e5d3f0a62c9e7d4b1a8f3c5e20d96",
+        "role": "member",
+    },
+}
+
+
+def mask_email(email):
+    """Che bot email: giu 2 ky tu dau cua phan local, an phan con lai."""
+    local, _, domain = email.partition("@")
+    return local[:2] + "***@" + domain
+
+
+def get_user_profile(user_id):
+    """Tra ve ho so cong khai cua nguoi dung (whitelist cac truong an toan)."""
+    user = USERS.get(user_id)
+    if user is None:
+
+$ python -c "import json; from app.user_service import get_user_profile; print(json.dumps(get_user_profile(1), indent=2))"
+{
+  "id": 1,
+  "username": "lan.nguyen",
+  "email": "la***@example.com",
+  "role": "admin"
+}
+
+$ python -c "from app.report_service import count_users_by_role; print(count_users_by_role())"
+{'admin': 1, 'member': 1}
+
+$ ls app
+report_service.py
+user_service.py
+
+$ cat VERSION
+1.0.1
+
+$ git diff --stat main develop
+ README.md             |  6 ++++++
+ app/report_service.py | 16 ++++++++++++++++
+ 2 files changed, 22 insertions(+)
+
+$ git log --oneline develop..main | wc -l
+1
+
+$ git log --oneline main..develop
+508c835 Merge branch 'hotfix/v1.0.1' into develop
+20a228e feat: bo sung roadmap 1.1.0 vao README
+1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+
+
+# BUOC 6: Don dep nhanh hotfix cuc bo va kiem tra cuoi theo de bai
+
+$ git branch -d hotfix/v1.0.1
+Deleted branch hotfix/v1.0.1 (was 2101781).
+
+$ git branch -a
+* develop
+  main
+
+$ git tag
+v1.0.0
+v1.0.1
+
+$ git log --graph --oneline --all
+*   508c835 Merge branch 'hotfix/v1.0.1' into develop
+|\  
+* | 20a228e feat: bo sung roadmap 1.1.0 vao README
+* | 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+| | * 337d9b5 Merge branch 'hotfix/v1.0.1'
+| |/| 
+|/|/  
+| * 2101781 chore: nang phien ban len 1.0.1
+| * 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+|/  
+* 78569ed feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+$ git log --graph --oneline --all --decorate
+*   508c835 (HEAD -> develop) Merge branch 'hotfix/v1.0.1' into develop
+|\  
+* | 20a228e feat: bo sung roadmap 1.1.0 vao README
+* | 1297c15 feat: them report_service thong ke nguoi dung theo vai tro (dang phat trien)
+| | * 337d9b5 (tag: v1.0.1, main) Merge branch 'hotfix/v1.0.1'
+| |/| 
+|/|/  
+| * 2101781 chore: nang phien ban len 1.0.1
+| * 01b4647 fix: khong tra ve password_hash trong ho so nguoi dung
+|/  
+* 78569ed (tag: v1.0.0) feat: them dich vu nguoi dung get_user_profile
+* bb7ec50 chore: khoi tao du an voi README va VERSION 1.0.0
+
+$ for r in main develop v1.0.0 v1.0.1 "v1.0.1^{commit}"; do echo "$r -> $(git rev-parse --short "$r")"; done
+main -> 337d9b5
+develop -> 508c835
+v1.0.0 -> 78eeb5b
+v1.0.1 -> 34b796f
+v1.0.1^{commit} -> 337d9b5
+
+$ git switch main
+Switched to branch 'main'
+
+$ git ls-files
+CHANGELOG.md
+README.md
+VERSION
+app/user_service.py
+
+$ git status
+On branch main
+nothing to commit, working tree clean
+
